@@ -9,10 +9,32 @@ The nice!view Elemental is a ZMK module that delivers a bold while minimalistic 
 - Provides a **subtle animation**;
 - **Optimized** to render as little as possible.
 
+## Installation
+
+Simply update the `config/west.yml` file in your keyboard's configuration repository by adding a new remote and project. 
+
+```yml
+manifest:
+  remotes:
+    - name: zmkfirmware
+      url-base: https://github.com/zmkfirmware
+    - name: kevinpastor
+      url-base: https://github.com/kevinpastor
+  projects:
+    - name: zmk
+      remote: zmkfirmware
+      revision: main
+      import: app/west.yml
+    - name: nice-view-elemental
+      remote: kevinpastor
+      revision: main
+  self:
+    path: config
+```
+
 ## Gallery
 
 ![Animation Preview](./assets/animation.gif)
-![Preview #1](./assets/preview_1.png)
 ![Preview #2](./assets/preview_2.png)
 ![Preview #3](./assets/preview_3.png)
 
