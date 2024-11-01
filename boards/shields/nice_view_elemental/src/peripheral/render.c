@@ -9,7 +9,7 @@
 #include "../../include/utils/draw_background.h"
 #include "../../include/utils/draw_bluetooth_logo_outlined.h"
 #include "../../include/utils/draw_bluetooth_logo.h"
-#include "../../include/utils/rotate_info_canvas.h"
+#include "../../include/utils/rotate_connectivity_canvas.h"
 
 void render_battery() {
     lv_canvas_fill_bg(battery_canvas, BACKGROUND_COLOR, LV_OPA_COVER);
@@ -18,15 +18,15 @@ void render_battery() {
 }
 
 void render_connectivity() {
-    lv_canvas_fill_bg(info_canvas, BACKGROUND_COLOR, LV_OPA_COVER);
+    lv_canvas_fill_bg(connectivity_canvas, BACKGROUND_COLOR, LV_OPA_COVER);
 
     if (states.connectivity.connected) {
-        draw_bluetooth_logo(info_canvas, 18, 4);
+        draw_bluetooth_logo(connectivity_canvas, 18, 4);
     } else {
-        draw_bluetooth_logo_outlined(info_canvas, 18, 4);
+        draw_bluetooth_logo_outlined(connectivity_canvas, 18, 4);
     }
 
-    rotate_info_canvas();
+    rotate_connectivity_canvas();
 }
 
 void render_main() {

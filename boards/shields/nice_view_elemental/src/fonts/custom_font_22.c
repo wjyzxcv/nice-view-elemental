@@ -1,10 +1,12 @@
 /*******************************************************************************
  * Size: 22 px
  * Bpp: 1
- * Opts: --bpp 1 --size 22 --no-compress --font LoRes22OTSerif-Bold.woff --range 32-127 --format lvgl -o custom_font_22.c
+ * Opts: --bpp 1 --size 22 --no-compress --font Custom Font.woff --range 32-127 --format lvgl -o custom_font_22.c
  ******************************************************************************/
 
 #include "../../include/fonts/custom_font_22.h"
+
+#include <lvgl.h>
 
 #ifndef CUSTOM_FONT_22
 #define CUSTOM_FONT_22 1
@@ -810,7 +812,4 @@ lv_font_t custom_font_22 = {
     .user_data = NULL,
 };
 
-
-
 #endif /*#if CUSTOM_FONT_22*/
-

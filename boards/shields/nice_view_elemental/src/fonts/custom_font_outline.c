@@ -8,6 +8,8 @@
 
 #include "../../include/fonts/custom_font_outline.h"
 
+#include <lvgl.h>
+
 #ifndef CUSTOM_FONT_OUTLINE
 #define CUSTOM_FONT_OUTLINE 1
 #endif
@@ -598,7 +600,4 @@ lv_font_t custom_font_outline = {
     .user_data = NULL,
 };
 
-
-
 #endif /*#if CUSTOM_FONT_OUTLINE*/
-

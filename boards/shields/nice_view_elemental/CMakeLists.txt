@@ -21,7 +21,7 @@ if(CONFIG_ZMK_DISPLAY AND CONFIG_NICE_VIEW_WIDGET_STATUS)
     ./src/utils/draw_bluetooth_logo.c
     ./src/utils/draw_bluetooth_searching.c
     ./src/utils/draw_usb_logo.c
-    ./src/utils/rotate_info_canvas.c
+    ./src/utils/rotate_connectivity_canvas.c
   )
 
   if(NOT CONFIG_ZMK_SPLIT OR CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
