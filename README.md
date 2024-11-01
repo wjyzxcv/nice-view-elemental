@@ -35,7 +35,7 @@ manifest:
       import: app/west.yml
 +   - name: nice-view-elemental
 +     remote: kevinpastor
-+     revision: new_main
++     revision: main
   self:
     path: config
 ```
