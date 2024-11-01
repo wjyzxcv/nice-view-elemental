@@ -15,6 +15,61 @@
 
 struct states states;
 
+#if IS_ENABLED(CONFIG_NICE_VIEW_ELEMENTAL_ANIMATION)
+void background_update_timer(lv_timer_t* timer)
+{
+    states.background_index = (states.background_index + 1) % UINT_MAX;
+
+    render_main();
+}
+
+lv_timer_t * timer;
+
+static void start_timer() {
+    // Call the `background_update_timer` function every configured interval.
+    timer = lv_timer_create(background_update_timer, CONFIG_NICE_VIEW_ELEMENTAL_ANIMATION_FRAME_MS, NULL);
+}
+
+// We want to pause the animation when the keyboard is idling.
+int activity_update_callback(const zmk_event_t* eh) {
+    struct zmk_activity_state_changed* ev = as_zmk_activity_state_changed(eh);
+    if (ev == NULL) {
+        return -ENOTSUP;
+    }
+
+    switch (ev->state) {
+        case ZMK_ACTIVITY_ACTIVE: {
+            lv_timer_resume(timer);
+            break;
+        }
+        case ZMK_ACTIVITY_IDLE:
+        case ZMK_ACTIVITY_SLEEP: {
+            lv_timer_pause(timer);
+            break;
+        }
+        default: {
+            return -EINVAL;
+        }
+    }
+
+    return 0;
+}
+
+// Create a listener named `activity_update`. This name is then used to create a
+// subscription. When subscribed, `activity_update_callback` will be called.
+ZMK_LISTENER(
+    activity_update,
+    activity_update_callback
+);
+
+// Subscribe the `activity_update` listener to the `zmk_activity_state_changed`
+// event dispatched by ZMK.
+ZMK_SUBSCRIPTION(
+    activity_update,
+    zmk_activity_state_changed
+);
+#endif
+
 static void battery_state_update_callback(struct battery_state state) {
     states.battery = state;
 
@@ -95,61 +150,6 @@ ZMK_SUBSCRIPTION(
     // central.
     zmk_split_peripheral_status_changed
 );
-
-#if IS_ENABLED(CONFIG_NICE_VIEW_ELEMENTAL_ANIMATION)
-void background_update_timer(lv_timer_t* timer)
-{
-    states.background_index = (states.background_index + 1) % UINT_MAX;
-
-    render_main();
-}
-
-lv_timer_t * timer;
-
-static void start_timer() {
-    // Call the `background_update_timer` function every configured interval.
-    timer = lv_timer_create(background_update_timer, CONFIG_NICE_VIEW_ELEMENTAL_ANIMATION_FRAME_MS, NULL);
-}
-
-// We want to pause the animation when the keyboard is idling.
-int activity_update_callback(const zmk_event_t* eh) {
-    struct zmk_activity_state_changed* ev = as_zmk_activity_state_changed(eh);
-    if (ev == NULL) {
-        return -ENOTSUP;
-    }
-
-    switch (ev->state) {
-        case ZMK_ACTIVITY_ACTIVE: {
-            lv_timer_resume(timer);
-            break;
-        }
-        case ZMK_ACTIVITY_IDLE:
-        case ZMK_ACTIVITY_SLEEP: {
-            lv_timer_pause(timer);
-            break;
-        }
-        default: {
-            return -EINVAL;
-        }
-    }
-
-    return 0;
-}
-
-// Create a listener named `activity_update`. This name is then used to create a
-// subscription. When subscribed, `activity_update_callback` will be called.
-ZMK_LISTENER(
-    activity_update,
-    activity_update_callback
-);
-
-// Subscribe the `activity_update` listener to the `zmk_activity_state_changed`
-// event dispatched by ZMK.
-ZMK_SUBSCRIPTION(
-    activity_update,
-    zmk_activity_state_changed
-);
-#endif
 
 void initialize_listeners() {
     widget_connectivity_state_update_init();
