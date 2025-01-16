@@ -15,6 +15,10 @@ if(CONFIG_ZMK_DISPLAY AND CONFIG_NICE_VIEW_WIDGET_STATUS)
     ./src/images/bluetooth_logo.c
     ./src/images/bluetooth_searching.c
     ./src/images/usb_logo.c
+    ./src/images/fluffy_boi_0.c
+    ./src/images/fluffy_boi_1.c
+    ./src/images/fluffy_boi_2.c
+    ./src/images/fluffy_boi_3.c
     ./src/utils/draw_background.c
     ./src/utils/draw_battery.c
     ./src/utils/draw_bluetooth_logo_outlined.c
@@ -22,6 +26,7 @@ if(CONFIG_ZMK_DISPLAY AND CONFIG_NICE_VIEW_WIDGET_STATUS)
     ./src/utils/draw_bluetooth_searching.c
     ./src/utils/draw_usb_logo.c
     ./src/utils/rotate_connectivity_canvas.c
+    ./src/utils/draw_fluffy_boi.c
   )
 
   if(NOT CONFIG_ZMK_SPLIT OR CONFIG_ZMK_SPLIT_ROLE_CENTRAL)

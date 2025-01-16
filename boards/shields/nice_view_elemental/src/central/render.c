@@ -46,11 +46,12 @@ static void render_bluetooth_profile_index() {
     label_dsc.align = LV_TEXT_ALIGN_RIGHT;
 
     static const unsigned custom_font_22_height = 19;
-    static const unsigned padding_y = (CONNECTIVITY_CANVAS_AVAILABLE_HEIGHT - custom_font_22_height) / 2;
+    static const unsigned padding_y =
+        (CONNECTIVITY_CANVAS_AVAILABLE_HEIGHT - custom_font_22_height) / 2;
     static const unsigned width = CONNECTIVITY_CANVAS_WIDTH - 18;
     static const char bluetooth_profile_label[5][2] = {"1", "2", "3", "4", "5"};
-    const char* label = bluetooth_profile_label[states.connectivity.active_profile_index];
-   
+    const char *label = bluetooth_profile_label[states.connectivity.active_profile_index];
+
     lv_canvas_draw_text(connectivity_canvas, 0, padding_y, width, &label_dsc, label);
 }
 
@@ -59,22 +60,20 @@ static void render_bluetooth_connectivity() {
     render_bluetooth_profile_index();
 }
 
-static void render_usb_connectivity() {
-    draw_usb_logo(connectivity_canvas, 11, 8);
-}
+static void render_usb_connectivity() { draw_usb_logo(connectivity_canvas, 11, 8); }
 
 void render_connectivity() {
     lv_canvas_fill_bg(connectivity_canvas, BACKGROUND_COLOR, LV_OPA_COVER);
 
     switch (states.connectivity.selected_endpoint.transport) {
-        case ZMK_TRANSPORT_BLE: {
-            render_bluetooth_connectivity();
-            break;
-        }
-        case ZMK_TRANSPORT_USB: {
-            render_usb_connectivity();
-            break;
-        }
+    case ZMK_TRANSPORT_BLE: {
+        render_bluetooth_connectivity();
+        break;
+    }
+    case ZMK_TRANSPORT_USB: {
+        render_usb_connectivity();
+        break;
+    }
     }
 
     rotate_connectivity_canvas();
@@ -89,12 +88,11 @@ void render_main() {
 #endif
 
     // Capitalize the layer name if given or use the layer number otherwise.
-    char* text = NULL;
+    char *text = NULL;
     if (states.layer.name == NULL) {
         text = malloc(10 * sizeof(char));
         sprintf(text, "LAYER %i", states.layer.index);
-    }
-    else {
+    } else {
         text = malloc((strlen(states.layer.name) + 1) * sizeof(char));
         for (unsigned i = 0; states.layer.name[i] != '\0'; i++) {
             text[i] = toupper(states.layer.name[i]);
@@ -104,7 +102,7 @@ void render_main() {
 
     // Magic number. The height of the font from the baseline to the ascender
     // height is 34px, but halving the space remaining of the full height gives
-    // us another value ((68px - 34px) / 2 = 17px). 
+    // us another value ((68px - 34px) / 2 = 17px).
     static const unsigned text_y_offset = 15;
 
 #if IS_ENABLED(CONFIG_NICE_VIEW_ELEMENTAL_OUTLINE)
@@ -114,16 +112,10 @@ void render_main() {
     outline_dsc.font = &custom_font_outline;
     outline_dsc.align = LV_TEXT_ALIGN_CENTER;
 
-    lv_canvas_draw_text(
-        main_canvas,
-        0,
-        // Magic number offset. We would think that the fonts would line up
-        // perfectly, because of how they were created, but no.
-        text_y_offset - 1,
-        MAIN_CANVAS_WIDTH,
-        &outline_dsc,
-        text
-    );
+    lv_canvas_draw_text(main_canvas, 0,
+                        // Magic number offset. We would think that the fonts would line up
+                        // perfectly, because of how they were created, but no.
+                        text_y_offset - 1, MAIN_CANVAS_WIDTH, &outline_dsc, text);
 #endif
 
 #if IS_ENABLED(CONFIG_NICE_VIEW_ELEMENTAL_SHADOW)
@@ -133,14 +125,7 @@ void render_main() {
     shadow_dsc.font = &custom_font_shadow;
     shadow_dsc.align = LV_TEXT_ALIGN_CENTER;
 
-    lv_canvas_draw_text(
-        main_canvas,
-        0,
-        text_y_offset,
-        MAIN_CANVAS_WIDTH,
-        &shadow_dsc,
-        text
-    );
+    lv_canvas_draw_text(main_canvas, 0, text_y_offset, MAIN_CANVAS_WIDTH, &shadow_dsc, text);
 #endif
 
     lv_draw_label_dsc_t layer_name_dsc;
@@ -149,14 +134,7 @@ void render_main() {
     layer_name_dsc.font = &custom_font_44;
     layer_name_dsc.align = LV_TEXT_ALIGN_CENTER;
 
-    lv_canvas_draw_text(
-        main_canvas,
-        0,
-        text_y_offset,
-        MAIN_CANVAS_WIDTH,
-        &layer_name_dsc,
-        text
-    );
+    lv_canvas_draw_text(main_canvas, 0, text_y_offset, MAIN_CANVAS_WIDTH, &layer_name_dsc, text);
 
     free(text);
     text = NULL;

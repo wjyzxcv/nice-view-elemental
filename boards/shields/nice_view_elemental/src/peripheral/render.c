@@ -10,6 +10,7 @@
 #include "../../include/utils/draw_bluetooth_logo_outlined.h"
 #include "../../include/utils/draw_bluetooth_logo.h"
 #include "../../include/utils/rotate_connectivity_canvas.h"
+#include "../../include/utils/draw_fluffy_boi.h"
 
 void render_battery() {
     lv_canvas_fill_bg(battery_canvas, BACKGROUND_COLOR, LV_OPA_COVER);
@@ -31,6 +32,7 @@ void render_connectivity() {
 
 void render_main() {
 #if IS_ENABLED(CONFIG_NICE_VIEW_ELEMENTAL_BACKGROUND)
-    draw_background(main_canvas, states.background_index);
+    draw_fluffy_boi(main_canvas, states.background_index);
+    // draw_background(main_canvas, states.background_index);
 #endif
 }
