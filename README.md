@@ -1,3 +1,5 @@
 # nice!view Elemental
 
-This fork adds a fluffy boi (not original) to the peripheral display, please check upstream for details.
+![Banner](./assets/banner.png)
+
+This fork adds a fluffy boi (not very original) to the peripheral display. Please check upstream for details.
