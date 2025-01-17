@@ -10,7 +10,7 @@ void draw_fluffy_boi(lv_obj_t *canvas, unsigned index) {
     lv_draw_img_dsc_t img_dsc;
     lv_draw_img_dsc_init(&img_dsc);
 
-    switch (index % 3) {
+    switch (index % 4) {
     case 0: {
         lv_canvas_draw_img(canvas, 0, 0, &fluffy_boi_0, &img_dsc);
         break;
