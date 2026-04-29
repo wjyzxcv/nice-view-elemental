@@ -3,30 +3,16 @@ if(CONFIG_ZMK_DISPLAY AND CONFIG_NICE_VIEW_WIDGET_STATUS)
 
   zephyr_library_sources(
     ./src/main.c
-    ./src/fonts/custom_font_22.c
-    ./src/images/background_0.c
-    ./src/images/background_1.c
-    ./src/images/background_2.c
-    ./src/images/background_3.c
-    ./src/images/background_4.c
-    ./src/images/background_5.c
-    ./src/images/background_6.c
     ./src/images/bluetooth_logo_outlined.c
     ./src/images/bluetooth_logo.c
     ./src/images/bluetooth_searching.c
-    ./src/images/usb_logo.c
-    ./src/images/fluffy_boi_0.c
-    ./src/images/fluffy_boi_1.c
-    ./src/images/fluffy_boi_2.c
-    ./src/images/fluffy_boi_3.c
-    ./src/utils/draw_background.c
     ./src/utils/draw_battery.c
     ./src/utils/draw_bluetooth_logo_outlined.c
     ./src/utils/draw_bluetooth_logo.c
     ./src/utils/draw_bluetooth_searching.c
-    ./src/utils/draw_usb_logo.c
-    ./src/utils/rotate_connectivity_canvas.c
-    ./src/utils/draw_fluffy_boi.c
+    ./src/images/battery.c
+    ./src/images/battery_bolt.c
+    ./src/images/usb.c
   )
 
   if(NOT CONFIG_ZMK_SPLIT OR CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
@@ -35,14 +21,28 @@ if(CONFIG_ZMK_DISPLAY AND CONFIG_NICE_VIEW_WIDGET_STATUS)
       ./src/central/render.c
       # These are not included on the peripheral since they are only used for
       # displaying the layer name.
-      ./src/fonts/custom_font_44.c
-      ./src/fonts/custom_font_shadow.c
-      ./src/fonts/custom_font_outline.c
+      ./src/fonts/press_start_2p_16.c
+      ./src/fonts/press_start_2p_8.c
     )
+    if(CONFIG_NICE_VIEW_ELEMENTAL_ANIMATION)
+      zephyr_library_sources(./src/images/stripe_double.c)
+    else()
+      zephyr_library_sources(./src/images/stripe_0.c)
+    endif()
   else()
     zephyr_library_sources(
       ./src/peripheral/initialize_listeners.c
       ./src/peripheral/render.c
     )
+    if(CONFIG_NICE_VIEW_ELEMENTAL_ANIMATION)
+      zephyr_library_sources(
+        ./src/images/fluffy_boi_0.c
+        ./src/images/fluffy_boi_1.c
+        ./src/images/fluffy_boi_2.c
+        ./src/images/fluffy_boi_3.c
+      )
+    else()
+      zephyr_library_sources(./src/images/fluffy_boi_0.c)
+    endif()
   endif()
 endif()

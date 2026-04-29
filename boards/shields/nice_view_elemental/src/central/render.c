@@ -1,141 +1,391 @@
 #include "../../include/central/render.h"
 
+#include "../../include/central/initialize_listeners.h"
+#include "../../include/colors.h"
+#include "../../include/fonts/press_start_2p_16.h"
+#include "../../include/fonts/press_start_2p_8.h"
+#include "../../include/main.h"
+#include "../../include/utils/draw_battery.h"
+#include "../../include/utils/draw_bluetooth_logo.h"
+#include "../../include/utils/draw_bluetooth_logo_outlined.h"
+#include "../../include/utils/draw_bluetooth_searching.h"
 #include <ctype.h>
 #include <lvgl.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <zephyr/sys/util.h>
-#include "../../include/colors.h"
-#include "../../include/central/initialize_listeners.h"
-#include "../../include/fonts/custom_font_22.h"
-#include "../../include/fonts/custom_font_44.h"
-#include "../../include/fonts/custom_font_shadow.h"
-#include "../../include/fonts/custom_font_outline.h"
-#include "../../include/main.h"
-#include "../../include/utils/draw_battery.h"
-#include "../../include/utils/draw_background.h"
-#include "../../include/utils/draw_bluetooth_searching.h"
-#include "../../include/utils/draw_bluetooth_logo_outlined.h"
-#include "../../include/utils/draw_bluetooth_logo.h"
-#include "../../include/utils/draw_usb_logo.h"
-#include "../../include/utils/rotate_connectivity_canvas.h"
+
+void draw_label_with_outline(lv_obj_t *canvas, lv_layer_t *layer,
+                             lv_draw_label_dsc_t *dsc, lv_area_t *origin,
+                             lv_color_t outline_color) {
+  lv_color_t initial_color = dsc->color;
+  dsc->color = outline_color;
+
+  { // Top left
+    lv_area_t coords = {origin->x1 - 1, origin->y1 - 1, origin->x2 - 1,
+                        origin->y2 - 1};
+    lv_draw_label(layer, dsc, &coords);
+    lv_canvas_finish_layer(canvas, layer);
+  }
+  { // Top right
+    lv_area_t coords = {origin->x1 + 1, origin->y1 - 1, origin->x2 + 1,
+                        origin->y2 - 1};
+    lv_draw_label(layer, dsc, &coords);
+    lv_canvas_finish_layer(canvas, layer);
+  }
+  { // Bottom left
+    lv_area_t coords = {origin->x1 - 1, origin->y1 + 1, origin->x2 - 1,
+                        origin->y2 + 1};
+    lv_draw_label(layer, dsc, &coords);
+    lv_canvas_finish_layer(canvas, layer);
+  }
+  {
+    lv_area_t coords = {origin->x1 + 1, origin->y1 + 1, origin->x2 + 1,
+                        origin->y2 + 1};
+    lv_draw_label(layer, dsc, &coords);
+  }
+
+  dsc->color = initial_color;
+  lv_draw_label(layer, dsc, origin);
+  lv_canvas_finish_layer(canvas, layer);
+}
 
 void render_battery() {
-    lv_canvas_fill_bg(battery_canvas, BACKGROUND_COLOR, LV_OPA_COVER);
+  lv_canvas_fill_bg(battery_canvas, BACKGROUND_COLOR, LV_OPA_TRANSP);
 
-    draw_battery(battery_canvas, 7, 4, states.battery);
+  draw_battery(battery_canvas, 0, 0, states.battery);
 }
 
 static void render_bluetooth_logo() {
-    if (states.connectivity.active_profile_bonded) {
-        if (states.connectivity.active_profile_connected) {
-            draw_bluetooth_logo(connectivity_canvas, 18, 4);
-        } else {
-            draw_bluetooth_logo_outlined(connectivity_canvas, 18, 4);
-        }
+  if (states.connectivity.active_profile_bonded) {
+    if (states.connectivity.active_profile_connected) {
+      draw_bluetooth_logo(connectivity_canvas, 16, 0);
     } else {
-        draw_bluetooth_searching(connectivity_canvas, 18, 4);
+      draw_bluetooth_logo_outlined(connectivity_canvas, 16, 0);
     }
+  } else {
+    draw_bluetooth_searching(connectivity_canvas, 16, 0);
+  }
 }
 
 static void render_bluetooth_profile_index() {
-    lv_draw_label_dsc_t label_dsc;
-    lv_draw_label_dsc_init(&label_dsc);
-    label_dsc.color = FOREGROUND_COLOR;
-    label_dsc.font = &custom_font_22;
-    label_dsc.align = LV_TEXT_ALIGN_RIGHT;
+  lv_draw_label_dsc_t label_dsc;
+  lv_draw_label_dsc_init(&label_dsc);
+  label_dsc.color = FOREGROUND_COLOR;
+  label_dsc.font = &press_start_2p_8;
+  label_dsc.align = LV_TEXT_ALIGN_RIGHT;
 
-    static const unsigned custom_font_22_height = 19;
-    static const unsigned padding_y =
-        (CONNECTIVITY_CANVAS_AVAILABLE_HEIGHT - custom_font_22_height) / 2;
-    static const unsigned width = CONNECTIVITY_CANVAS_WIDTH - 18;
-    static const char bluetooth_profile_label[5][2] = {"1", "2", "3", "4", "5"};
-    const char *label = bluetooth_profile_label[states.connectivity.active_profile_index];
+  // Magic number
+  static const unsigned padding_x_offset = 2;
+  static const unsigned padding_x = padding_x_offset;
 
-    lv_canvas_draw_text(connectivity_canvas, 0, padding_y, width, &label_dsc, label);
+  // Magic number
+  static const unsigned padding_y_offset = 1;
+  // `ceil` is used to tend towards the bottom of the screen.
+  const unsigned padding_y =
+      ceil((CONNECTIVITY_CANVAS_HEIGHT - press_start_2p_8.line_height) / 2) +
+      padding_y_offset;
+  static const unsigned width = CONNECTIVITY_CANVAS_WIDTH - 12 - 2;
+  static const char bluetooth_profile_label[5][2] = {"1", "2", "3", "4", "5"};
+  const char *label =
+      bluetooth_profile_label[states.connectivity.active_profile_index];
+  label_dsc.text = label;
+
+  lv_layer_t layer;
+  lv_canvas_init_layer(connectivity_canvas, &layer);
+
+  lv_area_t coords_rect = {padding_x + 1, padding_y + 1,
+                           padding_x + width - 1 - 3,
+                           padding_y + press_start_2p_16.line_height - 1 - 1};
+
+  draw_label_with_outline(connectivity_canvas, &layer, &label_dsc, &coords_rect,
+                          BACKGROUND_COLOR);
+
+  lv_canvas_finish_layer(connectivity_canvas, &layer);
 }
 
 static void render_bluetooth_connectivity() {
-    render_bluetooth_logo();
-    render_bluetooth_profile_index();
+  render_bluetooth_logo();
+  render_bluetooth_profile_index();
 }
 
-static void render_usb_connectivity() { draw_usb_logo(connectivity_canvas, 11, 8); }
+LV_IMG_DECLARE(usb);
+static void render_usb_connectivity() {
+  lv_draw_image_dsc_t img_dsc;
+  lv_draw_image_dsc_init(&img_dsc);
+  img_dsc.src = &usb;
+
+  lv_layer_t layer;
+  lv_canvas_init_layer(connectivity_canvas, &layer);
+
+  lv_area_t coords = {7, 4, 7 + usb.header.w - 1, 4 + usb.header.h - 1};
+
+  lv_draw_image(&layer, &img_dsc, &coords);
+
+  lv_canvas_finish_layer(connectivity_canvas, &layer);
+}
 
 void render_connectivity() {
-    lv_canvas_fill_bg(connectivity_canvas, BACKGROUND_COLOR, LV_OPA_COVER);
+  lv_canvas_fill_bg(connectivity_canvas, BACKGROUND_COLOR, LV_OPA_TRANSP);
 
-    switch (states.connectivity.selected_endpoint.transport) {
-    case ZMK_TRANSPORT_BLE: {
-        render_bluetooth_connectivity();
-        break;
-    }
-    case ZMK_TRANSPORT_USB: {
-        render_usb_connectivity();
-        break;
-    }
-    }
-
-    rotate_connectivity_canvas();
+  switch (states.connectivity.selected_endpoint.transport) {
+  case ZMK_TRANSPORT_BLE: {
+    render_bluetooth_connectivity();
+    break;
+  }
+  case ZMK_TRANSPORT_USB: {
+    render_usb_connectivity();
+    break;
+  }
+  case ZMK_TRANSPORT_NONE: {
+    render_bluetooth_connectivity();
+    break;
+  }
+  }
 }
 
 void render_main() {
-#if IS_ENABLED(CONFIG_NICE_VIEW_ELEMENTAL_BACKGROUND)
-    // Unfortunately, text transparency does not seem to work in LVGL 8.3. This
-    // forces us to redraw the background on every render instead of having it
-    // on a layer underneath.
-    draw_background(main_canvas, states.background_index);
-#endif
+  lv_layer_t layer;
+  lv_canvas_init_layer(layer_canvas, &layer);
 
-    // Capitalize the layer name if given or use the layer number otherwise.
-    char *text = NULL;
-    if (states.layer.name == NULL) {
-        text = malloc(10 * sizeof(char));
-        sprintf(text, "LAYER %i", states.layer.index);
-    } else {
-        text = malloc((strlen(states.layer.name) + 1) * sizeof(char));
-        for (unsigned i = 0; states.layer.name[i] != '\0'; i++) {
-            text[i] = toupper(states.layer.name[i]);
-        }
-        text[strlen(states.layer.name)] = '\0';
+  lv_canvas_fill_bg(layer_canvas, BACKGROUND_COLOR, LV_OPA_TRANSP);
+
+  // Capitalize the layer name if given or use the layer number otherwise.
+  char *text = NULL;
+  if (states.layer.name == NULL) {
+    text = malloc(10 * sizeof(char));
+    sprintf(text, "LAYER %i", states.layer.index);
+  } else {
+    text = malloc((strlen(states.layer.name) + 1) * sizeof(char));
+    for (unsigned i = 0; states.layer.name[i] != '\0'; i++) {
+#if IS_ENABLED(NICE_VIEW_ELEMENTAL_CAPITALIZATION)
+      text[i] = toupper(states.layer.name[i]);
+#else
+      text[i] = states.layer.name[i];
+#endif
     }
+    text[strlen(states.layer.name)] = '\0';
+  }
 
-    // Magic number. The height of the font from the baseline to the ascender
-    // height is 34px, but halving the space remaining of the full height gives
-    // us another value ((68px - 34px) / 2 = 17px).
-    static const unsigned text_y_offset = 15;
+  lv_draw_label_dsc_t layer_name_dsc;
+  lv_draw_label_dsc_init(&layer_name_dsc);
+  layer_name_dsc.color = FOREGROUND_COLOR;
+  layer_name_dsc.font = &press_start_2p_16;
+  layer_name_dsc.align = LV_TEXT_ALIGN_CENTER;
+  layer_name_dsc.text = text;
 
-#if IS_ENABLED(CONFIG_NICE_VIEW_ELEMENTAL_OUTLINE)
-    lv_draw_label_dsc_t outline_dsc;
-    lv_draw_label_dsc_init(&outline_dsc);
-    outline_dsc.color = FOREGROUND_COLOR;
-    outline_dsc.font = &custom_font_outline;
-    outline_dsc.align = LV_TEXT_ALIGN_CENTER;
+  lv_area_t layer_name_coords_rect = {1, 1, LAYER_CANVAS_WIDTH - 1 - 1,
+                                      LAYER_CANVAS_HEIGHT - 1 - 1};
 
-    lv_canvas_draw_text(main_canvas, 0,
-                        // Magic number offset. We would think that the fonts would line up
-                        // perfectly, because of how they were created, but no.
-                        text_y_offset - 1, MAIN_CANVAS_WIDTH, &outline_dsc, text);
+  draw_label_with_outline(layer_canvas, &layer, &layer_name_dsc,
+                          &layer_name_coords_rect, BACKGROUND_COLOR);
+
+  lv_canvas_finish_layer(layer_canvas, &layer);
+
+  free(text);
+  text = NULL;
+}
+
+void render_modifiers() {
+  lv_canvas_fill_bg(modifiers_canvas, BACKGROUND_COLOR, LV_OPA_TRANSP);
+
+  lv_layer_t layer;
+  lv_canvas_init_layer(modifiers_canvas, &layer);
+
+  lv_draw_rect_dsc_t inactive_modifier_background_dsc;
+  lv_draw_rect_dsc_init(&inactive_modifier_background_dsc);
+  inactive_modifier_background_dsc.bg_color = BACKGROUND_COLOR;
+  inactive_modifier_background_dsc.border_color = BACKGROUND_COLOR;
+  inactive_modifier_background_dsc.border_width = 1;
+  inactive_modifier_background_dsc.border_side = LV_BORDER_SIDE_FULL;
+
+  lv_draw_rect_dsc_t active_modifier_background_dsc;
+  lv_draw_rect_dsc_init(&active_modifier_background_dsc);
+  active_modifier_background_dsc.bg_color = FOREGROUND_COLOR;
+  active_modifier_background_dsc.border_color = BACKGROUND_COLOR;
+  active_modifier_background_dsc.border_width = 1;
+  active_modifier_background_dsc.border_side = LV_BORDER_SIDE_FULL;
+
+  lv_draw_label_dsc_t active_modifier_text_dsc;
+  lv_draw_label_dsc_init(&active_modifier_text_dsc);
+  active_modifier_text_dsc.color = BACKGROUND_COLOR;
+  active_modifier_text_dsc.font = &press_start_2p_8;
+  active_modifier_text_dsc.align = LV_TEXT_ALIGN_LEFT;
+
+  lv_draw_label_dsc_t inactive_modifier_text_dsc;
+  lv_draw_label_dsc_init(&inactive_modifier_text_dsc);
+  inactive_modifier_text_dsc.color = FOREGROUND_COLOR;
+  inactive_modifier_text_dsc.font = &press_start_2p_8;
+  inactive_modifier_text_dsc.align = LV_TEXT_ALIGN_LEFT;
+
+  {
+    {
+      lv_area_t coords = {0, // 0 * (MODIFIER_WIDTH + MODIFIER_PADDING_X),
+                          0, 0 + MODIFIER_WIDTH - 1,
+                          0 + MODIFIERS_CANVAS_HEIGHT - 1};
+      lv_draw_rect(&layer,
+                   states.modifiers.is_gui_active
+                       ? &active_modifier_background_dsc
+                       : &inactive_modifier_background_dsc,
+                   &coords);
+      lv_canvas_finish_layer(modifiers_canvas, &layer);
+    }
+    {
+      lv_area_t coords = {
+          BORDER_WIDTH + MODIFIER_PADDING_X, BORDER_WIDTH + MODIFIER_PADDING_Y,
+          BORDER_WIDTH + MODIFIER_PADDING_X + MODIFIER_WIDTH - 1,
+          BORDER_WIDTH + MODIFIER_PADDING_Y + press_start_2p_8.line_height - 1};
+      active_modifier_text_dsc.text = "M";
+      inactive_modifier_text_dsc.text = "M";
+      lv_draw_label(&layer,
+                    states.modifiers.is_gui_active
+                        ? &active_modifier_text_dsc
+                        : &inactive_modifier_text_dsc,
+                    &coords);
+      lv_canvas_finish_layer(modifiers_canvas, &layer);
+    }
+  }
+
+  {
+    {
+      lv_area_t coords = {1 * (MODIFIER_WIDTH + MODIFIERS_GAP), 0,
+                          1 * (MODIFIER_WIDTH + MODIFIERS_GAP) +
+                              MODIFIER_WIDTH - 1,
+                          0 + MODIFIERS_CANVAS_HEIGHT - 1};
+      lv_draw_rect(&layer,
+                   states.modifiers.is_alt_active
+                       ? &active_modifier_background_dsc
+                       : &inactive_modifier_background_dsc,
+                   &coords);
+      lv_canvas_finish_layer(modifiers_canvas, &layer);
+    }
+    {
+      lv_area_t coords = {1 * (MODIFIER_WIDTH + MODIFIERS_GAP) + BORDER_WIDTH +
+                              MODIFIER_PADDING_X,
+                          BORDER_WIDTH + MODIFIER_PADDING_Y,
+                          1 * (MODIFIER_WIDTH + MODIFIERS_GAP) + BORDER_WIDTH +
+                              MODIFIER_PADDING_X + MODIFIER_WIDTH - 1,
+                          BORDER_WIDTH + MODIFIER_PADDING_Y +
+                              press_start_2p_8.line_height - 1};
+      active_modifier_text_dsc.text = "A";
+      inactive_modifier_text_dsc.text = "A";
+      lv_draw_label(&layer,
+                    states.modifiers.is_alt_active
+                        ? &active_modifier_text_dsc
+                        : &inactive_modifier_text_dsc,
+                    &coords);
+      lv_canvas_finish_layer(modifiers_canvas, &layer);
+    }
+  }
+
+  {
+    {
+      lv_area_t coords = {2 * (MODIFIER_WIDTH + MODIFIERS_GAP), 0,
+                          2 * (MODIFIER_WIDTH + MODIFIERS_GAP) +
+                              MODIFIER_WIDTH - 1,
+                          0 + MODIFIERS_CANVAS_HEIGHT - 1};
+      lv_draw_rect(&layer,
+                   states.modifiers.is_ctrl_active
+                       ? &active_modifier_background_dsc
+                       : &inactive_modifier_background_dsc,
+                   &coords);
+      lv_canvas_finish_layer(modifiers_canvas, &layer);
+    }
+    {
+      lv_area_t coords = {2 * (MODIFIER_WIDTH + MODIFIERS_GAP) + BORDER_WIDTH +
+                              MODIFIER_PADDING_X,
+                          BORDER_WIDTH + MODIFIER_PADDING_Y,
+                          2 * (MODIFIER_WIDTH + MODIFIERS_GAP) + BORDER_WIDTH +
+                              MODIFIER_PADDING_X + MODIFIER_WIDTH - 1,
+                          BORDER_WIDTH + MODIFIER_PADDING_Y +
+                              press_start_2p_8.line_height - 1};
+      active_modifier_text_dsc.text = "C";
+      inactive_modifier_text_dsc.text = "C";
+      lv_draw_label(&layer,
+                    states.modifiers.is_ctrl_active
+                        ? &active_modifier_text_dsc
+                        : &inactive_modifier_text_dsc,
+                    &coords);
+      lv_canvas_finish_layer(modifiers_canvas, &layer);
+    }
+  }
+
+  {
+    {
+      lv_area_t coords = {3 * (MODIFIER_WIDTH + MODIFIERS_GAP), 0,
+                          3 * (MODIFIER_WIDTH + MODIFIERS_GAP) +
+                              MODIFIER_WIDTH - 1,
+                          0 + MODIFIERS_CANVAS_HEIGHT - 1};
+      lv_draw_rect(&layer,
+                   states.modifiers.is_shift_active
+                       ? &active_modifier_background_dsc
+                       : &inactive_modifier_background_dsc,
+                   &coords);
+      lv_canvas_finish_layer(modifiers_canvas, &layer);
+    }
+    {
+      lv_area_t coords = {3 * (MODIFIER_WIDTH + MODIFIERS_GAP) + BORDER_WIDTH +
+                              MODIFIER_PADDING_X,
+                          BORDER_WIDTH + MODIFIER_PADDING_Y,
+                          3 * (MODIFIER_WIDTH + MODIFIERS_GAP) + BORDER_WIDTH +
+                              MODIFIER_PADDING_X + MODIFIER_WIDTH - 1,
+                          BORDER_WIDTH + MODIFIER_PADDING_Y +
+                              press_start_2p_8.line_height - 1};
+      active_modifier_text_dsc.text = "S";
+      inactive_modifier_text_dsc.text = "S";
+      lv_draw_label(&layer,
+                    states.modifiers.is_shift_active
+                        ? &active_modifier_text_dsc
+                        : &inactive_modifier_text_dsc,
+                    &coords);
+      lv_canvas_finish_layer(modifiers_canvas, &layer);
+    }
+  }
+}
+
+// Scrolling background
+LV_IMG_DECLARE(stripe_0);
+#if IS_ENABLED(CONFIG_NICE_VIEW_ELEMENTAL_ANIMATION)
+LV_IMG_DECLARE(stripe_double);
+
+static const int32_t stripe_tile_height = 68;
+
+static lv_anim_t anim_template;
+static lv_anim_t *running_anim = NULL;
 #endif
 
-#if IS_ENABLED(CONFIG_NICE_VIEW_ELEMENTAL_SHADOW)
-    lv_draw_label_dsc_t shadow_dsc;
-    lv_draw_label_dsc_init(&shadow_dsc);
-    shadow_dsc.color = BACKGROUND_COLOR;
-    shadow_dsc.font = &custom_font_shadow;
-    shadow_dsc.align = LV_TEXT_ALIGN_CENTER;
-
-    lv_canvas_draw_text(main_canvas, 0, text_y_offset, MAIN_CANVAS_WIDTH, &shadow_dsc, text);
+void initialize_animation() {
+#if IS_ENABLED(CONFIG_NICE_VIEW_ELEMENTAL_ANIMATION)
+  lv_image_set_src(image_canvas, &stripe_double);
+  lv_anim_init(&anim_template);
+  lv_anim_set_var(&anim_template, image_canvas);
+  lv_anim_set_exec_cb(&anim_template, (lv_anim_exec_xcb_t)lv_image_set_offset_y);
+  lv_anim_set_values(&anim_template, 0, -stripe_tile_height);
+  lv_anim_set_duration(&anim_template,
+                       stripe_tile_height * ANIM_DURATION_CENTRAL / 4);
+#else
+  lv_image_set_src(image_canvas, &stripe_0);
 #endif
+}
 
-    lv_draw_label_dsc_t layer_name_dsc;
-    lv_draw_label_dsc_init(&layer_name_dsc);
-    layer_name_dsc.color = FOREGROUND_COLOR;
-    layer_name_dsc.font = &custom_font_44;
-    layer_name_dsc.align = LV_TEXT_ALIGN_CENTER;
+void start_animation() {
+#if IS_ENABLED(CONFIG_NICE_VIEW_ELEMENTAL_ANIMATION)
+  if (running_anim && lv_anim_is_paused(running_anim)) {
+    lv_anim_resume(running_anim);
+    return;
+  }
+  if (running_anim)
+    return;
+  lv_anim_set_repeat_count(&anim_template, LV_ANIM_REPEAT_INFINITE);
+  running_anim = lv_anim_start(&anim_template);
+#endif
+}
 
-    lv_canvas_draw_text(main_canvas, 0, text_y_offset, MAIN_CANVAS_WIDTH, &layer_name_dsc, text);
-
-    free(text);
-    text = NULL;
+void stop_animation() {
+#if IS_ENABLED(CONFIG_NICE_VIEW_ELEMENTAL_ANIMATION)
+  if (running_anim) {
+    lv_anim_pause(running_anim);
+  }
+#endif
 }
