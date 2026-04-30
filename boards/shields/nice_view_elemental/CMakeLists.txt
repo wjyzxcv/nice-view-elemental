@@ -9,7 +9,6 @@ if(CONFIG_ZMK_DISPLAY AND CONFIG_NICE_VIEW_WIDGET_STATUS)
     ./src/utils/draw_battery.c
     ./src/utils/draw_bluetooth_logo_outlined.c
     ./src/utils/draw_bluetooth_logo.c
-    ./src/utils/draw_bluetooth_searching.c
     ./src/images/battery.c
     ./src/images/battery_bolt.c
     ./src/images/usb.c
@@ -17,10 +16,9 @@ if(CONFIG_ZMK_DISPLAY AND CONFIG_NICE_VIEW_WIDGET_STATUS)
 
   if(NOT CONFIG_ZMK_SPLIT OR CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
     zephyr_library_sources(
+      ./src/utils/draw_bluetooth_searching.c
       ./src/central/initialize_listeners.c
       ./src/central/render.c
-      # These are not included on the peripheral since they are only used for
-      # displaying the layer name.
       ./src/fonts/press_start_2p_16.c
       ./src/fonts/press_start_2p_8.c
     )

@@ -42,7 +42,7 @@ void draw_battery(lv_obj_t *canvas, lv_coord_t x, lv_coord_t y,
   draw_battery_outline(canvas, x, y);
 
   // Draw the main part of the battery
-  const int width = 19 * (state.level / 100.0);
+  const int width = 19 * state.level / 100;
   if (width > 0) {
     lv_layer_t layer;
     lv_canvas_init_layer(canvas, &layer);

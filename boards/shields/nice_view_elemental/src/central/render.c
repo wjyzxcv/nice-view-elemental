@@ -11,8 +11,6 @@
 #include "../../include/utils/draw_bluetooth_searching.h"
 #include <ctype.h>
 #include <lvgl.h>
-#include <math.h>
-#include <stdlib.h>
 #include <string.h>
 #include <zephyr/sys/util.h>
 
@@ -82,14 +80,21 @@ static void render_bluetooth_profile_index() {
 
   // Magic number
   static const unsigned padding_y_offset = 1;
-  // `ceil` is used to tend towards the bottom of the screen.
   const unsigned padding_y =
-      ceil((CONNECTIVITY_CANVAS_HEIGHT - press_start_2p_8.line_height) / 2) +
+      (CONNECTIVITY_CANVAS_HEIGHT - press_start_2p_8.line_height) / 2 +
       padding_y_offset;
   static const unsigned width = CONNECTIVITY_CANVAS_WIDTH - 12 - 2;
-  static const char bluetooth_profile_label[5][2] = {"1", "2", "3", "4", "5"};
-  const char *label =
-      bluetooth_profile_label[states.connectivity.active_profile_index];
+
+  const int idx = states.connectivity.active_profile_index;
+  const char *label;
+  if (idx >= 0 && idx <= 8) {
+    static char single_digit[2];
+    single_digit[0] = '1' + idx;
+    single_digit[1] = '\0';
+    label = single_digit;
+  } else {
+    label = "?";
+  }
   label_dsc.text = label;
 
   lv_layer_t layer;
@@ -145,6 +150,8 @@ void render_connectivity() {
   }
 }
 
+#define LAYER_TEXT_BUF_SIZE 32
+
 void render_main() {
   lv_layer_t layer;
   lv_canvas_init_layer(layer_canvas, &layer);
@@ -152,20 +159,25 @@ void render_main() {
   lv_canvas_fill_bg(layer_canvas, BACKGROUND_COLOR, LV_OPA_TRANSP);
 
   // Capitalize the layer name if given or use the layer number otherwise.
-  char *text = NULL;
+  char text[LAYER_TEXT_BUF_SIZE];
   if (states.layer.name == NULL) {
-    text = malloc(10 * sizeof(char));
-    sprintf(text, "LAYER %i", states.layer.index);
+    snprintf(text, LAYER_TEXT_BUF_SIZE, "LAYER %i", states.layer.index);
   } else {
-    text = malloc((strlen(states.layer.name) + 1) * sizeof(char));
-    for (unsigned i = 0; states.layer.name[i] != '\0'; i++) {
+    size_t len = strlen(states.layer.name);
+    if (len >= LAYER_TEXT_BUF_SIZE) {
+      // Truncate with ellipsis
+      memcpy(text, states.layer.name, LAYER_TEXT_BUF_SIZE - 4);
+      strcpy(text + LAYER_TEXT_BUF_SIZE - 4, "...");
+    } else {
 #if IS_ENABLED(NICE_VIEW_ELEMENTAL_CAPITALIZATION)
-      text[i] = toupper(states.layer.name[i]);
+      for (size_t i = 0; states.layer.name[i] != '\0'; i++) {
+        text[i] = toupper(states.layer.name[i]);
+      }
 #else
-      text[i] = states.layer.name[i];
+      strcpy(text, states.layer.name);
 #endif
+      text[len] = '\0';
     }
-    text[strlen(states.layer.name)] = '\0';
   }
 
   lv_draw_label_dsc_t layer_name_dsc;
@@ -182,9 +194,6 @@ void render_main() {
                           &layer_name_coords_rect, BACKGROUND_COLOR);
 
   lv_canvas_finish_layer(layer_canvas, &layer);
-
-  free(text);
-  text = NULL;
 }
 
 void render_modifiers() {
@@ -360,7 +369,8 @@ void initialize_animation() {
   lv_image_set_src(image_canvas, &stripe_double);
   lv_anim_init(&anim_template);
   lv_anim_set_var(&anim_template, image_canvas);
-  lv_anim_set_exec_cb(&anim_template, (lv_anim_exec_xcb_t)lv_image_set_offset_y);
+  lv_anim_set_exec_cb(&anim_template,
+                      (lv_anim_exec_xcb_t)lv_image_set_offset_y);
   lv_anim_set_values(&anim_template, 0, -stripe_tile_height);
   lv_anim_set_duration(&anim_template,
                        stripe_tile_height * ANIM_DURATION_CENTRAL / 4);

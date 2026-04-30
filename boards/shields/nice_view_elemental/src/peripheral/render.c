@@ -39,7 +39,7 @@ void render_battery() {
                     LV_COLOR_FORMAT_RGB565);
 }
 void render_connectivity() {
-  // lv_canvas_fill_bg(connectivity_canvas, FOREGROUND_COLOR, LV_OPA_TRANSP);
+  lv_canvas_fill_bg(connectivity_canvas, BACKGROUND_COLOR, LV_OPA_TRANSP);
 
   if (states.connectivity.connected) {
     draw_bluetooth_logo(connectivity_canvas, 16, 0);
@@ -67,6 +67,8 @@ static lv_anim_t anim_template;
 static lv_anim_t *running_anim = NULL;
 
 static void frame_change_cb(lv_obj_t *obj, int32_t idx) {
+  if (!obj)
+    return;
   if (idx >= frame_count)
     idx = frame_count - 1;
   lv_image_set_src(obj, images[idx]);
@@ -81,7 +83,7 @@ void initialize_animation() {
   lv_anim_set_var(&anim_template, image_canvas);
   lv_anim_set_exec_cb(&anim_template, (lv_anim_exec_xcb_t)frame_change_cb);
   lv_anim_set_values(&anim_template, 0, frame_count);
-  lv_anim_set_duration(&anim_template, frame_count * ANIM_DURATION_PERIPHRAL);
+  lv_anim_set_duration(&anim_template, frame_count * ANIM_DURATION_PERIPHERAL);
 #endif
 }
 

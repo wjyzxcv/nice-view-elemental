@@ -21,9 +21,6 @@
 #define CONNECTIVITY_CANVAS_WIDTH 30
 #define CONNECTIVITY_CANVAS_HEIGHT 19
 
-#define IMAGE_CANVAS_WIDTH 135
-#define IMAGE_CANVAS_HEIGHT 68
-
 #define MODIFIERS_GAP 1
 #define MODIFIERS_COUNT 4
 #define MODIFIER_FONT_WIDTH 7
@@ -41,7 +38,7 @@
 #define LAYER_CANVAS_HEIGHT 26
 
 #define ANIM_DURATION_CENTRAL CONFIG_NICE_VIEW_ELEMENTAL_ANIMATION_FRAME_MS
-#define ANIM_DURATION_PERIPHRAL                                                \
+#define ANIM_DURATION_PERIPHERAL                                               \
   CONFIG_NICE_VIEW_ELEMENTAL_ANIMATION_FRAME_MS * 2
 
 extern lv_obj_t *battery_canvas;
@@ -57,4 +54,3 @@ extern lv_obj_t *modifiers_canvas;
 extern lv_color_t modifiers_canvas_buffer[];
 
 extern lv_obj_t *image_canvas;
-// extern lv_color_t image_canvas_buffer[];

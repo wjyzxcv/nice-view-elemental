@@ -26,13 +26,11 @@ int activity_update_callback(const zmk_event_t *eh) {
   switch (ev->state) {
   case ZMK_ACTIVITY_ACTIVE: {
     start_animation();
-    // lv_timer_resume(timer);
     break;
   }
   case ZMK_ACTIVITY_IDLE:
   case ZMK_ACTIVITY_SLEEP: {
     stop_animation();
-    // lv_timer_pause(timer);
     break;
   }
   default: {
